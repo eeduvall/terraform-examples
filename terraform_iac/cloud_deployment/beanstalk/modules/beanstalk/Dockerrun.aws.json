@@ -1,0 +1,29 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "containerDefinitions": [
+    {
+      "name": "express-backend",
+      "image": "669387797487.dkr.ecr.us-east-2.amazonaws.com/express-be",
+      "portMappings": [
+          {
+            "hostPort": 3001,
+            "containerPort": 3001
+          }
+        ],
+      "essential": true,
+      "memory": 128
+    },
+    {
+      "name": "react-frontend",
+      "image": "669387797487.dkr.ecr.us-east-2.amazonaws.com/react-fe",
+      "portMappings": [
+        {
+          "hostPort": 3000,
+          "containerPort": 3000
+        }
+      ],
+      "essential": true,
+      "memory": 128
+    }
+  ]
+}

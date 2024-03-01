@@ -1,0 +1,90 @@
+module "s3_container_images" {
+  source = "./modules/s3"
+}
+
+resource "aws_iam_role" "beanstalk_role" {
+  name = "beanstalk_sts_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = "BeanstalkRole"
+        Principal = {
+          Service = ["ec2.amazonaws.com", "ecr.amazonaws.com"]
+        }
+      }
+    ]
+  })
+  tags = {
+    service = "example"
+  }
+}
+
+resource "aws_iam_role_policy" "beanstalk_ecr_role_policy" {
+  name = "beanstalk_ecr_role_policy"
+  role = aws_iam_role.beanstalk_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Sid": "AllowPull",
+        "Effect": "Allow",
+        "Action": [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:GetRepositoryPolicy",
+          "ecr:DescribeRepositories",
+          "ecr:ListImages",
+          "ecr:BatchGetImage"
+        ],
+        "Resource" = ["arn:aws:ecr:us-east-2:669387797487:repository/express-be", "arn:aws:ecr:us-east-2:669387797487:repository/react-fe"]
+      }
+    ]
+  })
+}
+
+
+resource "aws_iam_instance_profile" "iam_beanstalk_instance_profile" {
+  name = "BeanstalkProfile"
+  role = aws_iam_role.beanstalk_role.name
+}
+
+resource "aws_elastic_beanstalk_application" "beanstalk_app" {
+  name        = "BeanstalkApp"
+  description = "FE and BE"
+
+  tags = {
+    Name        = "Beanstalk"
+    Service     = "Example"
+    Environment = "Latest"
+  }
+}
+
+resource "aws_elastic_beanstalk_environment" "beanstalk-env" {
+  name                = "beanstalk-env"
+  application         = aws_elastic_beanstalk_application.beanstalk_app.name
+  solution_stack_name = "64bit Amazon Linux 2023 v4.0.0 running ECS"
+
+  # want launch template
+  setting {
+      namespace = "aws:autoscaling:launchconfiguration"
+      name = "IamInstanceProfile"
+      value = aws_iam_instance_profile.iam_beanstalk_instance_profile.name
+  }
+
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name = "InstanceType"
+    value = "t2.micro"
+  }
+
+  tags = {
+    Name        = "Beanstalk Env"
+    Service     = "Example"
+    Environment = "Latest"
+  }
+}

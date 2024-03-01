@@ -1,0 +1,21 @@
+version: 1.0.0
+services:
+  express-server:
+    image: 669387797487.dkr.ecr.us-east-2.amazonaws.com/express-be
+    # build: express_backend/.
+    networks:
+      - react_2_express
+    ports:
+      - 3001:3001
+  react-server:
+    image: 669387797487.dkr.ecr.us-east-2.amazonaws.com/react-fe
+    networks:
+      - react_2_express
+    # build: react_frontend/.
+    ports:
+      - 80:3000
+networks:
+  react_2_express:
+    name: react_2_express
+    # subnet: 172.10.0.0/16
+    # network_mode: bridge
